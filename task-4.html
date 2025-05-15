@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>To-Do App - SkillCraft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 to-purple-100 min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 space-y-6">
+    <h1 class="text-3xl font-bold text-center text-purple-700">To-Do List</h1>
+
+    <!-- Input Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+      <input id="taskInput" type="text" placeholder="Enter a task..." class="sm:col-span-5 px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none w-full">
+      <input id="taskDate" type="datetime-local" class="sm:col-span-4 px-3 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none w-full">
+      <button onclick="addTask()" class="sm:col-span-3 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition w-full">Add Task</button>
+    </div>
+
+    <!-- Task List -->
+    <ul id="taskList" class="space-y-4 max-h-[400px] overflow-y-auto pr-1"></ul>
+  </div>
+
+  <script>
+    const taskList = document.getElementById('taskList');
+    const taskInput = document.getElementById('taskInput');
+    const taskDate = document.getElementById('taskDate');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    function saveTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.className = 'bg-gray-100 p-4 rounded-2xl flex justify-between items-start shadow-md transition-all';
+
+        const left = document.createElement('div');
+        const title = document.createElement('p');
+        title.textContent = task.text;
+        title.className = 'font-medium text-gray-800 break-words';
+        if (task.done) {
+          title.classList.add('line-through', 'text-gray-400');
+        }
+
+        const time = document.createElement('p');
+        time.className = 'text-xs text-gray-500 mt-1';
+        if (task.time) {
+          const date = new Date(task.time);
+          time.textContent = `Due: ${date.toLocaleString()}`;
+        }
+
+        left.append(title);
+        if (task.time) left.append(time);
+
+        const right = document.createElement('div');
+        right.className = 'flex gap-2 items-center mt-1 sm:mt-0';
+
+        const completeBtn = document.createElement('button');
+        completeBtn.textContent = '✅';
+        completeBtn.title = 'Mark as Complete';
+        completeBtn.onclick = () => {
+          tasks[index].done = !tasks[index].done;
+          saveTasks();
+          renderTasks();
+        };
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Edit Task';
+        editBtn.onclick = () => {
+          const newText = prompt('Edit task:', task.text);
+          if (newText) {
+            tasks[index].text = newText;
+            saveTasks();
+            renderTasks();
+          }
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Delete Task';
+        deleteBtn.onclick = () => {
+          tasks.splice(index, 1);
+          saveTasks();
+          renderTasks();
+        };
+
+        right.append(completeBtn, editBtn, deleteBtn);
+        li.append(left, right);
+        taskList.appendChild(li);
+      });
+    }
+
+    function addTask() {
+      const text = taskInput.value.trim();
+      const time = taskDate.value;
+
+      if (!text) {
+        taskInput.focus();
+        return;
+      }
+      if (!time) {
+        taskDate.focus();
+        return;
+      }
+
+      tasks.push({ text, time, done: false });
+      saveTasks();
+      renderTasks();
+
+      taskInput.value = '';
+      taskDate.value = '';
+      taskInput.focus();
+    }
+
+    // Enhanced enter key behavior
+    taskInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (taskInput.value.trim()) {
+          taskDate.focus();
+        }
+      }
+    });
+
+    taskDate.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addTask();
+      }
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
